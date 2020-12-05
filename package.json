@@ -2,18 +2,18 @@
   "name": "quest-sage",
   "version": "0.0.1",
   "description": "",
-  "keywords": "quest-sage",
+  "keywords": [
+    "quest-sage"
+  ],
   "license": "",
   "author": "",
   "scripts": {
-    "build": "parcel build index.html",
-    "dev": "parcel index.html --open",
-    "start": "npm run build && npm run dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "parcel index.html",
+    "build": "parcel build index.html"
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
+    "parcel-plugin-wasm.rs": "^1.2.16",
     "typescript": "^4.1.2"
-  },
-  "dependencies": {}
+  }
 }
