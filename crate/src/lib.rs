@@ -2,7 +2,6 @@
 extern crate cfg_if;
 
 extern crate wasm_bindgen;
-extern crate web_sys;
 use wasm_bindgen::prelude::*;
 
 cfg_if! {
@@ -27,13 +26,16 @@ cfg_if! {
     }
 }
 
-// Called by our JS entry point to run the example
+/// Initialises the state of the Rust library.
 #[wasm_bindgen]
-pub fn run() -> Result<(), JsValue> {
+pub fn initialise_rust() {
     // If the `console_error_panic_hook` feature is enabled this will set a panic hook, otherwise
     // it will do nothing.
     set_panic_hook();
+}
 
+/*#[wasm_bindgen]
+pub fn run() -> Result<(), JsValue> {
     // Use `web_sys`'s global `window` function to get a handle on the global
     // window object.
     let window = web_sys::window().expect("no global `window` exists");
@@ -47,5 +49,5 @@ pub fn run() -> Result<(), JsValue> {
     body.append_child(&val)?;
 
     Ok(())
-}
+}*/
 

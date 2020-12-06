@@ -14,7 +14,14 @@
 
     <link rel="manifest" href="site.webmanifest">
     <link rel="apple-touch-icon" href="icon.png">
-    <!-- Place favicon.ico in the root directory -->
+    <!--
+        This might create two copies of the `favicon`, since we include it statically and also here
+        But it's better to have two copies than for one of the methods to fail!
+    -->
+    <link rel="shortcut icon" href="static/favicon.ico">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/main.sass">
@@ -23,11 +30,12 @@
 </head>
 
 <body>
-
     <!-- Add your site or application content here -->
-    <p>Hello world! This is HTML5 Boilerplate.</p>
+    <canvas id="tabletop"></canvas>
+
     <script src="js/vendor/modernizr-3.11.2.min.js"></script>
     <script src="js/plugins.js"></script>
+    <script src="js/link_rust.js"></script>
     <script src="ts/main.ts"></script>
 
     <!-- Google Analytics: change UA-XXXXX-Y to be your site's ID. -->

@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
+    "parcel-plugin-robot": "^1.0.0",
     "parcel-plugin-wasm.rs": "^1.2.16",
     "sass": "^1.30.0",
     "typescript": "^4.1.2"
