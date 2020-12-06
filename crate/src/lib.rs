@@ -42,7 +42,7 @@ pub fn run() -> Result<(), JsValue> {
 
     // Manufacture the element we're gonna append
     let val = document.create_element("p")?;
-    val.set_inner_html("Hello from Rust, WebAssembly, and Parcel 3!");
+    val.set_inner_html("Hello from Rust, WebAssembly, and Parcel!");
 
     body.append_child(&val)?;
 
