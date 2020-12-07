@@ -1,5 +1,6 @@
 import * as wasm from "../crate/pkg/rust_parcel_bg.wasm";
-import { draw_tabletop } from "./tabletop";
+import { TabletopRenderer } from "./tabletop";
 
 wasm.initialise_rust();
-draw_tabletop();
+const canvas = document.getElementById("tabletop") as HTMLCanvasElement;
+new TabletopRenderer(canvas);

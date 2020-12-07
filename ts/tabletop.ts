@@ -1,32 +1,54 @@
-export function draw_tabletop(): void {
-    const CELL_SIZE = 64; // px
-    const GRID_COLOR = "#CCCCCC";
-    const DEAD_COLOR = "#FFFFFF";
-    const ALIVE_COLOR = "#000000";
+import { fabric } from "fabric";
+import { ResizeSensor } from "css-element-queries";
 
-    const height = 20;
-    const width = 20;
+export class TabletopRenderer {
+    canvas: fabric.Canvas;
+    grid?: fabric.Line[];
 
-    const canvas = document.getElementById("tabletop") as HTMLCanvasElement;
-    canvas.height = (CELL_SIZE + 1) * height + 1;
-    canvas.width = (CELL_SIZE + 1) * width + 1;
-
-    const ctx = canvas.getContext('2d')!;
-
-    ctx.beginPath();
-    ctx.strokeStyle = GRID_COLOR;
-
-    // Vertical lines.
-    for (let i = 0; i <= width; i++) {
-        ctx.moveTo(i * (CELL_SIZE + 1) + 1, 0);
-        ctx.lineTo(i * (CELL_SIZE + 1) + 1, (CELL_SIZE + 1) * height + 1);
+    constructor(canvasElement: HTMLCanvasElement) {
+        this.canvas = new fabric.Canvas(canvasElement);
+    
+        const tabletopContainer = document.getElementById("tabletop-container") as HTMLDivElement;
+        new ResizeSensor(tabletopContainer, this.onCanvasResize.bind(this));
     }
 
-    // Horizontal lines.
-    for (let j = 0; j <= height; j++) {
-        ctx.moveTo(0,                           j * (CELL_SIZE + 1) + 1);
-        ctx.lineTo((CELL_SIZE + 1) * width + 1, j * (CELL_SIZE + 1) + 1);
+    onCanvasResize(size: { width: number, height: number }) {
+        this.canvas.setDimensions(size);
+        this.drawGridCells();
+        this.canvas.renderAll();
     }
 
-    ctx.stroke();
+    drawGridCells(): fabric.Line[] {
+        const CELL_SIZE = 64; // px
+        const GRID_COLOUR = "#CCCCCC";
+    
+        const height = this.canvas.height!;
+        const width = this.canvas.width!;
+        const rows = Math.ceil(height / (CELL_SIZE + 1));
+        const cols = Math.ceil(width / (CELL_SIZE + 1));
+    
+        const lineOpts = {
+            stroke: GRID_COLOUR,
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+        };
+    
+        if (this.grid !== undefined) {
+            this.canvas.remove(...this.grid);
+        }
+
+        let lines = [];
+        for (let i = 0; i <= cols; i++) {
+            const line = new fabric.Line([i * (CELL_SIZE + 1) + 1, 0, i * (CELL_SIZE + 1) + 1, height], lineOpts);
+            lines.push(line);
+        }
+        for (let j = 0; j <= rows; j++) {
+            const line = new fabric.Line([0, j * (CELL_SIZE + 1) + 1, width, j * (CELL_SIZE + 1) + 1], lineOpts);
+            lines.push(line);
+        }
+        this.canvas.add(...lines);
+    
+        return lines;
+    }
 }
