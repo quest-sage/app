@@ -41,6 +41,8 @@ export class TabletopRenderer {
         tabletopContainer.appendChild(gridCanvasContainer);
         gridCanvasContainer.appendChild(gridCanvas);
         this.gridCanvas = new fabric.Canvas(gridCanvas);
+        gridCanvas.className = "bg_grid_square64";
+        gridCanvas.style.opacity = '30%';
 
         new ResizeSensor(tabletopContainer, this.onCanvasResize.bind(this));
     }
@@ -50,14 +52,16 @@ export class TabletopRenderer {
         this.coverCanvas.height = size.height;
 
         this.gridCanvas.setDimensions(size);
-        this.drawGridCells();
+        //this.drawGridCells();
     }
 
     onCanvasTranslate(movementX: number, movementY: number): void {
         this.position[0] -= movementX;
         this.position[1] -= movementY;
-        this.gridCanvas.setViewportTransform([1, 0, 0, 1, -this.position[0], -this.position[1]]);
-        this.drawGridCells();
+        this.gridCanvas.getContext().canvas.style.backgroundPositionX = -this.position[0] + 'px';
+        this.gridCanvas.getContext().canvas.style.backgroundPositionY = -this.position[1] + 'px';
+        //this.gridCanvas.setViewportTransform([1, 0, 0, 1, -this.position[0], -this.position[1]]);
+        //this.drawGridCells();
     }
 
     drawGridCells(): fabric.Line[] {
