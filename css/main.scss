@@ -131,6 +131,20 @@ h1 {
   }
 }
 
+#tabletop-container {
+  position: relative;
+  height: 100%;
+
+  // Stack all of the canvas layers on top of each other.
+  .canvas-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
 .text-centre {
   text-align: center;
 }
