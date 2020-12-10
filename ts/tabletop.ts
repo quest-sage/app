@@ -10,7 +10,7 @@ class GridLayer {
     /**
      * The fabric canvas used to annotate the grid background.
      */
-    canvas: fabric.Canvas;
+    canvas: fabric.StaticCanvas;
 
     annotations: fabric.Rect[];
 
@@ -33,7 +33,7 @@ class GridLayer {
         gridCanvasContainer.className = "canvas-layer";
         tabletopContainer.appendChild(gridCanvasContainer);
         gridCanvasContainer.appendChild(canvas);
-        this.canvas = new fabric.Canvas(canvas);
+        this.canvas = new fabric.StaticCanvas(canvas);
 
         this.annotations = [];
 
@@ -67,8 +67,6 @@ class GridLayer {
             stroke: GRID_COLOUR,
             fill: undefined,
             strokeWidth: 4,
-            selectable: false,
-            evented: false,
             rx: 2,
             ry: 2,
         }));
@@ -76,6 +74,13 @@ class GridLayer {
         this.annotations = cells;
     }
 }
+
+/**
+ * The mode through which the user interacts with the tabletop.
+ * In 'move' mode, for example, the user can use the mouse to pan around the
+ * tabletop.
+ */
+type Mode = 'move' | 'grid';
 
 export class TabletopRenderer {
     /**
@@ -95,6 +100,52 @@ export class TabletopRenderer {
         this.position = [0, 0];
         this.infiniteScrolling = false;
 
+        const modeSelector = document.createElement("div");
+        modeSelector.id = "mode-selector";
+        tabletopContainer.appendChild(modeSelector);
+
+        const modeForm = document.createElement("form");
+        modeSelector.appendChild(modeForm);
+
+        {
+            const radio = document.createElement("input");
+            radio.type = 'radio';
+            radio.name = 'mode';
+            radio.id = 'move';
+            radio.checked = true;
+            modeForm.appendChild(radio);
+
+            const label = document.createElement("label");
+            label.htmlFor = 'move';
+            label.className = "fas fa-hand-paper";
+            modeForm.appendChild(label);
+
+            radio.addEventListener('change', (function (this1) {
+                return (_: Event) => {
+                    this1.changeMode('move');
+                };
+            })(this));
+        }
+
+        {
+            const radio = document.createElement("input");
+            radio.type = 'radio';
+            radio.name = 'mode';
+            radio.id = 'grid';
+            modeForm.appendChild(radio);
+
+            const label = document.createElement("label");
+            label.htmlFor = 'grid';
+            label.className = "fas fa-border-all";
+            modeForm.appendChild(label);
+
+            radio.addEventListener('change', (function (this1) {
+                return (_: Event) => {
+                    this1.changeMode('grid');
+                };
+            })(this));
+        }
+
         const coverCanvas = document.createElement("canvas");
         coverCanvas.id = "tabletop-cover";
         coverCanvas.className = "canvas-layer";
@@ -109,7 +160,7 @@ export class TabletopRenderer {
             }
         });
 
-        coverCanvas.addEventListener('mouseup', _ => {
+        document.addEventListener('mouseup', _ => {
             this.draggingCanvas = false;
             if (this.infiniteScrolling) {
                 document.exitPointerLock();
@@ -132,7 +183,7 @@ export class TabletopRenderer {
         this.coverCanvas.height = size.height;
 
         this.gridLayer.setDimensions(size);
-        
+
         this.onCanvasTranslate(0, 0);
     }
 
@@ -146,7 +197,11 @@ export class TabletopRenderer {
         // because CSS requires us to do things in terms of the top left.
         const x = -this.position[0] + this.coverCanvas.width! / 2;
         const y = -this.position[1] + this.coverCanvas.height! / 2;
-        
+
         this.gridLayer.setViewportTransform([1, 0, 0, 1, x, y]);
+    }
+
+    changeMode(newMode: Mode) {
+        console.log(`Mode is now ${newMode}`);
     }
 }
