@@ -39,3 +39,8 @@ features = [
 
 [features]
 default = ["console_error_panic_hook"]
+
+[package.metadata.wasm-pack.profile.release]
+# Currently, wasm-opt is slightly broken, and certain things (e.g. returning a String) completely break it.
+# https://github.com/rustwasm/wasm-pack/issues/886
+wasm-opt = false

@@ -2,17 +2,27 @@ import { fabric } from "fabric";
 import { ResizeSensor } from "css-element-queries";
 
 class GridLayer {
+    private cellSize = 64; // px
+
     /**
      * The background div that should scroll with the tabletop, whose background image
      * is set to a repeating image of the current grid type (e.g. squares).
      */
-    gridBackground: HTMLDivElement;
+    private gridBackground: HTMLDivElement;
     /**
      * The fabric canvas used to annotate the grid background.
      */
-    canvas: fabric.StaticCanvas;
+    private canvas: fabric.StaticCanvas;
 
-    annotations: fabric.Rect[];
+    private annotations: fabric.Rect[];
+    /**
+     * The currently hovered cell.
+     */
+    private hoveredCell?: { x: number, y: number };
+    /**
+     * An indicator to show which cell we are hovering over.
+     */
+    private hoveredCellIndicator?: fabric.Rect;
 
     /**
      * @param tabletopContainer The div inside which the canvas layers should be placed.
@@ -52,8 +62,7 @@ class GridLayer {
         this.canvas.setViewportTransform(matrix);
     }
 
-    addDebugAnnotations() {
-        const CELL_SIZE = 64; // px
+    private addDebugAnnotations() {
         const GRID_COLOUR = "#FF4343";
 
         this.canvas.remove(...this.annotations);
@@ -62,8 +71,8 @@ class GridLayer {
         cells.push(new fabric.Rect({
             top: -2,
             left: -2,
-            width: CELL_SIZE,
-            height: CELL_SIZE,
+            width: this.cellSize,
+            height: this.cellSize,
             stroke: GRID_COLOUR,
             fill: undefined,
             strokeWidth: 4,
@@ -72,6 +81,49 @@ class GridLayer {
         }));
         this.canvas.add(...cells);
         this.annotations = cells;
+    }
+
+    /**
+     * Given coordinates relative to the canvas, what cell are they hovering over?
+     */
+    private computeHoveredCell(x: number, y: number): { x: number, y: number } {
+        return {
+            x: Math.floor((x - this.canvas.viewportTransform![4]) / 64),
+            y: -Math.floor((y - this.canvas.viewportTransform![5]) / 64)
+        };
+    }
+
+    /**
+     * Given coordinates relative to the canvas, update the hovered cell indicator with the new mouse position.
+     */
+    updateHoveredCell(x: number, y: number) {
+        this.hoveredCell = this.computeHoveredCell(x, y);
+        if (this.hoveredCellIndicator === undefined) {
+            this.hoveredCellIndicator = new fabric.Rect({
+                top: (-this.hoveredCell.y * this.cellSize) - 2,
+                left: (this.hoveredCell.x * this.cellSize) - 2,
+                width: this.cellSize,
+                height: this.cellSize,
+                stroke: "#FFFFFF",
+                fill: undefined,
+                strokeWidth: 4,
+                rx: 2,
+                ry: 2,
+            });
+            this.canvas.add(this.hoveredCellIndicator);
+        } else {
+            this.hoveredCellIndicator.top = (-this.hoveredCell.y * this.cellSize) - 2;
+            this.hoveredCellIndicator.left = (this.hoveredCell.x * this.cellSize) - 2;
+            this.canvas.requestRenderAll();
+        }
+    }
+
+    unfocus() {
+        if (this.hoveredCellIndicator !== undefined) {
+            this.canvas.remove(this.hoveredCellIndicator);
+        }
+        this.hoveredCell = undefined;
+        this.hoveredCellIndicator = undefined;
     }
 }
 
@@ -91,15 +143,13 @@ export class TabletopRenderer {
      * The canvas layer used for drawing the grid, and annotations on the grid.
      */
     gridLayer: GridLayer;
-    draggingCanvas: boolean;
-    position: [number, number];
-    infiniteScrolling: boolean;
+
+    draggingCanvas: boolean = false;
+    position: [number, number] = [0, 0];
+    infiniteScrolling: boolean = false;
+    mode: Mode = 'move';
 
     constructor(tabletopContainer: HTMLDivElement) {
-        this.draggingCanvas = false;
-        this.position = [0, 0];
-        this.infiniteScrolling = false;
-
         const modeSelector = document.createElement("div");
         modeSelector.id = "mode-selector";
         tabletopContainer.appendChild(modeSelector);
@@ -120,11 +170,9 @@ export class TabletopRenderer {
             label.className = "fas fa-hand-paper";
             modeForm.appendChild(label);
 
-            radio.addEventListener('change', (function (this1) {
-                return (_: Event) => {
-                    this1.changeMode('move');
-                };
-            })(this));
+            radio.addEventListener('change', _ => {
+                this.changeMode('move');
+            });
         }
 
         {
@@ -139,11 +187,9 @@ export class TabletopRenderer {
             label.className = "fas fa-border-all";
             modeForm.appendChild(label);
 
-            radio.addEventListener('change', (function (this1) {
-                return (_: Event) => {
-                    this1.changeMode('grid');
-                };
-            })(this));
+            radio.addEventListener('change', _ => {
+                this.changeMode('grid');
+            });
         }
 
         const coverCanvas = document.createElement("canvas");
@@ -154,22 +200,38 @@ export class TabletopRenderer {
         this.coverCanvas = coverCanvas;
 
         coverCanvas.addEventListener('mousedown', _ => {
-            this.draggingCanvas = true;
-            if (this.infiniteScrolling) {
-                coverCanvas.requestPointerLock();
+            switch (this.mode) {
+                case 'move':
+                    this.draggingCanvas = true;
+                    if (this.infiniteScrolling) {
+                        coverCanvas.requestPointerLock();
+                    }
+                    break;
             }
         });
 
         document.addEventListener('mouseup', _ => {
-            this.draggingCanvas = false;
-            if (this.infiniteScrolling) {
-                document.exitPointerLock();
+            switch (this.mode) {
+                case 'move':
+                    this.draggingCanvas = false;
+                    if (this.infiniteScrolling) {
+                        document.exitPointerLock();
+                    }
+                    break;
             }
         });
 
         coverCanvas.addEventListener('mousemove', e => {
-            if (this.draggingCanvas) {
-                this.onCanvasTranslate(e.movementX, e.movementY);
+            switch (this.mode) {
+                case 'move':
+                    if (this.draggingCanvas) {
+                        this.onCanvasTranslate(e.movementX, e.movementY);
+                    }
+                    break;
+
+                case 'grid':
+                    const cell = this.gridLayer.updateHoveredCell(e.offsetX, e.offsetY);
+                    break;
             }
         });
 
@@ -202,6 +264,12 @@ export class TabletopRenderer {
     }
 
     changeMode(newMode: Mode) {
-        console.log(`Mode is now ${newMode}`);
+        this.draggingCanvas = false;
+        if (this.infiniteScrolling) {
+            document.exitPointerLock();
+        }
+        this.gridLayer.unfocus();
+
+        this.mode = newMode;
     }
 }
